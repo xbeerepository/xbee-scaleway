@@ -210,19 +210,29 @@ func (r *Region2) createOneInstance(ctx context.Context, h *ProviderHost) error 
 	if err != nil {
 		return err
 	}
-	size := scw.Size(uint64(h.Specification.Size) * uint64(scw.GB))
-	volumeType := instance.VolumeVolumeTypeLSSD
+	volumeType := instance.VolumeVolumeTypeSbsVolume
 	if h.Specification.VolumeType != "" {
 		volumeType = instance.VolumeVolumeType(h.Specification.VolumeType)
 	}
-	serverOut, err := r.clients.instance.CreateServer(&instance.CreateServerRequest{
+	createReq := &instance.CreateServerRequest{
 		Zone:              r.Zone,
 		Name:              scwName(h.Name),
 		Project:           &r.ProjectId,
 		CommercialType:    h.Specification.CommercialType,
 		Image:             &imageID,
 		DynamicIPRequired: scw.BoolPtr(true),
-		Volumes: map[string]*instance.VolumeServerTemplate{
+		Tags:              tagsForResource(h.Name),
+	}
+	// A boot volume of type sbs_volume can only be created by cloning the
+	// image's own snapshot: Scaleway rejects a freshly-sized "raw" SBS boot
+	// volume ("cannot create a raw SBS volume, provide a volume id or an
+	// image"). So for sbs_volume we omit Volumes entirely and let the API
+	// derive the boot volume from the image, like the Scaleway console does.
+	// l_ssd boot volumes, by contrast, are always created raw/blank and do
+	// need an explicit size.
+	if volumeType == instance.VolumeVolumeTypeLSSD {
+		size := scw.Size(uint64(h.Specification.Size) * uint64(scw.GB))
+		createReq.Volumes = map[string]*instance.VolumeServerTemplate{
 			"0": {
 				Boot:       scw.BoolPtr(true),
 				Name:       scw.StringPtr(scwName(h.Name) + "-root"),
@@ -230,9 +240,9 @@ func (r *Region2) createOneInstance(ctx context.Context, h *ProviderHost) error 
 				VolumeType: volumeType,
 				Project:    &r.ProjectId,
 			},
-		},
-		Tags: tagsForResource(h.Name),
-	}, scw.WithContext(ctx))
+		}
+	}
+	serverOut, err := r.clients.instance.CreateServer(createReq, scw.WithContext(ctx))
 	if err != nil {
 		return err
 	}
@@ -295,7 +305,7 @@ func (r *Region2) imageFor(h *ProviderHost) (string, error) {
 
 func (r *Region2) createVolume(ctx context.Context, volName string) error {
 	vol := r.Volumes[volName]
-	volumeType := instance.VolumeVolumeTypeLSSD
+	volumeType := instance.VolumeVolumeTypeSbsVolume
 	if vol.Specification.VolumeType != "" {
 		volumeType = instance.VolumeVolumeType(vol.Specification.VolumeType)
 	}
