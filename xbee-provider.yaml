@@ -1,0 +1,20 @@
+schema-version: 1.0
+
+provider: https://download.xbee.io/latest/{{ .xbee.os }}_{{ .xbee.arch }}/xbee-scaleway.gz
+
+system:
+  image:
+
+host:
+  projectId:
+  zone:
+  commercialType:
+  image:
+  volumeType:
+  size:
+
+volume:
+  projectId:
+  zone:
+  volumeType:
+
