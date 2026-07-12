@@ -240,7 +240,7 @@ func (r *Region2) createOneInstance(ctx context.Context, h *ProviderHost) error 
 		Zone:     r.Zone,
 		ServerID: serverOut.Server.ID,
 		Key:      "cloud-init",
-		Content:  stringsReader(provider.AuthorizedKeyScript(h.User)),
+		Content:  stringsReader("#!/bin/bash\n" + provider.AuthorizedKeyScript(h.User)),
 	}, scw.WithContext(ctx)); err != nil {
 		return err
 	}

@@ -2,6 +2,7 @@ package scaleway
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/iodasolutions/xbee-common/cmd"
@@ -112,12 +113,17 @@ func zonesForHosts(ctx context.Context) (map[string]*Region2, *cmd.XbeeError) {
 	}
 	ch := util.Multiplex(ctx, channels...)
 	result := map[string]*Region2{}
+	var zoneErrs []error
 	for resp := range ch {
 		if resp.err != nil {
 			log2.Errorf("%v", resp.err)
+			zoneErrs = append(zoneErrs, resp.err)
 		} else {
 			result[resp.r.Name] = resp.r
 		}
+	}
+	if len(zoneErrs) > 0 {
+		return nil, cmd.Error("cannot resolve %d zone(s) : %v", len(zoneErrs), errors.Join(zoneErrs...))
 	}
 	return result, nil
 }
