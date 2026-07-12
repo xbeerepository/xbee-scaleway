@@ -305,7 +305,11 @@ func (r *Region2) imageFor(h *ProviderHost) (string, error) {
 
 func (r *Region2) createVolume(ctx context.Context, volName string) error {
 	vol := r.Volumes[volName]
-	volumeType := instance.VolumeVolumeTypeSbsVolume
+	// Unlike boot volumes, standalone data volumes can't be sbs_volume on
+	// the legacy instance/v1/volumes endpoint used here: Scaleway rejects it
+	// ("not a valid value") and creating raw SBS volumes requires the
+	// separate Block Storage API. l_ssd is still supported for this case.
+	volumeType := instance.VolumeVolumeTypeLSSD
 	if vol.Specification.VolumeType != "" {
 		volumeType = instance.VolumeVolumeType(vol.Specification.VolumeType)
 	}
