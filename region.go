@@ -379,9 +379,13 @@ func (r *Region2) instanceInfos(_ context.Context) map[string]*provider.Instance
 					break
 				}
 			}
-			_, info.PackIdExist = r.ImageMap[h.EffectiveHash()]
-			_, info.SystemIdExist = r.ImageMap[h.SystemHash]
 		}
+		// Image existence only depends on r.ImageMap (built from the
+		// project's images), not on whether an instance is currently
+		// running for this host: on the very first "xbee up" for a host,
+		// no instance exists yet, but the image can already be there.
+		_, info.PackIdExist = r.ImageMap[h.EffectiveHash()]
+		_, info.SystemIdExist = r.ImageMap[h.SystemHash]
 		result[name] = info
 	}
 	return result
