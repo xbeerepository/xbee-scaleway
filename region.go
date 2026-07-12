@@ -466,6 +466,18 @@ func (r *Region2) packInstance(ctx context.Context, h *ProviderHost) error {
 	if err := r.serverAction(ctx, server.ID, instance.ServerActionPoweroff); err != nil {
 		return fmt.Errorf("cannot poweroff instance %s before packing : %v", h.Name, err)
 	}
+	// ServerAction only fires the poweroff and returns; the server sits in a
+	// transient "stopping" state for a few seconds, during which
+	// CreateSnapshot is rejected ("resource ... is in a transient state").
+	// Wait for it to actually reach "stopped" before snapshotting.
+	if _, err := r.clients.instance.WaitForServer(&instance.WaitForServerRequest{
+		Zone:          r.Zone,
+		ServerID:      server.ID,
+		Timeout:       durationPtr(5 * time.Minute),
+		RetryInterval: durationPtr(5 * time.Second),
+	}, scw.WithContext(ctx)); err != nil {
+		return fmt.Errorf("cannot wait for instance %s to poweroff before packing : %v", h.Name, err)
+	}
 	snap, err := r.clients.instance.CreateSnapshot(&instance.CreateSnapshotRequest{
 		Zone:     r.Zone,
 		Name:     imageNameFor(h.EffectiveHash()),
