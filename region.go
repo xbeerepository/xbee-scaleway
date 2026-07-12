@@ -451,6 +451,16 @@ func (r *Region2) packInstance(ctx context.Context, h *ProviderHost) error {
 		}
 	}
 	if rootVolumeID == "" {
+		// SBS boot volumes derived from an image (no explicit Volumes given
+		// at CreateServer time) come back with Boot=false from the API even
+		// though they are the boot device: Scaleway only seems to set Boot
+		// when it was explicitly requested. "0" is the conventional slot for
+		// the boot volume in the per-server volume map, so fall back to it.
+		if vol, ok := server.Volumes["0"]; ok {
+			rootVolumeID = vol.ID
+		}
+	}
+	if rootVolumeID == "" {
 		return fmt.Errorf("cannot find boot volume for host %s", h.Name)
 	}
 	if err := r.serverAction(ctx, server.ID, instance.ServerActionPoweroff); err != nil {
