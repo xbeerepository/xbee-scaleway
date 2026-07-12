@@ -1,0 +1,16 @@
+package main
+
+import (
+	"context"
+	"log"
+
+	"github.com/iodasolutions/xbee-common/indus"
+)
+
+func main() {
+	ctx := context.TODO()
+
+	if err := indus.Build(ctx, "main", "xbee-scaleway"); err != nil {
+		log.Fatal(err)
+	}
+}

@@ -469,7 +469,7 @@ func (r *Region2) packInstance(ctx context.Context, h *ProviderHost) error {
 		Zone:       r.Zone,
 		Name:       imageNameFor(h.EffectiveHash()),
 		RootVolume: snapshot.ID,
-		Arch:       instance.ArchX86_64,
+		Arch:       scalewayArchFor(h),
 		Project:    &r.ProjectId,
 		Tags:       []string{idTag(h.EffectiveHash())},
 	}, scw.WithContext(ctx))
@@ -486,6 +486,18 @@ func (r *Region2) packInstance(ctx context.Context, h *ProviderHost) error {
 	}
 	r.ImageMap[h.EffectiveHash()] = img.Image.ID
 	return nil
+}
+
+func scalewayArchFor(h *ProviderHost) instance.Arch {
+	if h.Specification.Arch != "" {
+		return instance.Arch(h.Specification.Arch)
+	}
+	switch h.OsArch {
+	case "linux_arm64":
+		return instance.ArchArm64
+	default:
+		return instance.ArchX86_64
+	}
 }
 
 func (r *Region2) destroyInstances(ctx context.Context) {

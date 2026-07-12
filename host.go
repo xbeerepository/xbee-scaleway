@@ -10,6 +10,7 @@ type ScalewayHostData struct {
 	Zone           string `yaml:"zone,omitempty"`
 	CommercialType string `yaml:"commercialType,omitempty"`
 	Image          string `yaml:"image,omitempty"`
+	Arch           string `yaml:"arch,omitempty"`
 	VolumeType     string `yaml:"volumeType,omitempty"`
 	Size           int    `yaml:"size,omitempty"`
 }
@@ -35,6 +36,9 @@ func hostFrom(req *provider.XbeeHost) (*ProviderHost, *cmd.XbeeError) {
 				}
 				if image, ok := imageForArch["label"].(string); ok && m.Image == "" {
 					m.Image = image
+				}
+				if arch, ok := imageForArch["arch"].(string); ok {
+					m.Arch = arch
 				}
 			}
 		}

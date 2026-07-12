@@ -9,7 +9,6 @@ host:
   projectId:
   zone:
   commercialType:
-  image:
   volumeType:
   size:
 
@@ -17,4 +16,3 @@ volume:
   projectId:
   zone:
   volumeType:
-
